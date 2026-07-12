@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/images/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>BudgetWise - Smart Budget Management System</title>
+    <meta name="description" content="Take control of your finances with BudgetWise. Track expenses, manage budgets, and achieve your financial goals." />
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Tailwind Configuration -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#0C3823',
+              'primary-dark': '#153E2D',
+              accent: '#D2E8D7',
+              background: '#F7F9F6',
+              surface: '#FFFFFF',
+              'text-main': '#2A332E',
+              'text-muted': '#6B726E',
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-in-out',
+              'slide-up': 'slideUp 0.3s ease-out',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideUp: {
+                '0%': { transform: 'translateY(10px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+            },
+          }
+        }
+      }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #F7F9F6 0%, #E8EFE4 100%);
+        min-height: 100vh;
+      }
+      
+      #root {
+        min-height: 100vh;
+      }
+      
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+      }
+      
+      .glass-card-hover {
+        transition: all 0.3s ease;
+      }
+      
+      .glass-card-hover:hover {
+        transform: translateY(-4px);
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+      }
+      
+      .btn-primary {
+        background: linear-gradient(135deg, #0C3823 0%, #153E2D 100%);
+        color: white;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(12, 56, 35, 0.3);
+      }
+      
+      .btn-secondary {
+        background: rgba(210, 232, 215, 0.8);
+        backdrop-filter: blur(8px);
+        color: #0C3823;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(210, 232, 215, 0.5);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .btn-secondary:hover {
+        background: rgba(210, 232, 215, 1);
+        transform: translateY(-2px);
+      }
+      
+      .input-field {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #E2E8E6;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+      }
+      
+      .input-field:focus {
+        outline: none;
+        border-color: #0C3823;
+        box-shadow: 0 0 0 3px rgba(12, 56, 35, 0.1);
+      }
+      
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      
+      .animate-slide-up {
+        animation: slideUp 0.3s ease-out;
+      }
+      
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      
+      @keyframes slideUp {
+        from {
+          transform: translateY(10px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
