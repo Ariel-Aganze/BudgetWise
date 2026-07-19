@@ -5,6 +5,7 @@ import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Budgets from './pages/Budgets'
 import Expenses from './pages/Expenses'
+import Reports from './pages/Reports'
 import Notifications from './pages/Notifications'
 import Profile from './pages/Profile'
 import Landing from './pages/Landing'
@@ -73,6 +74,11 @@ function AppRoutes() {
       <Route path="/expenses" element={
         <ProtectedRoute>
           <Expenses />
+        </ProtectedRoute>
+      } />
+      <Route path="/reports" element={
+        <ProtectedRoute>
+          <Reports />
         </ProtectedRoute>
       } />
       <Route path="/notifications" element={

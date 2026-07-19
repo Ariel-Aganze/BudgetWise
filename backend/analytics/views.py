@@ -246,3 +246,164 @@ class CategoryAnalyticsView(APIView):
             'recent_expenses': recent_expenses_data,
             'currency': 'RWF'
         })
+
+class ReportsView(APIView):
+    """
+    Generate detailed reports for the authenticated user.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        
+        # Get date range from query params
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+        
+        # Default to current month
+        now = timezone.localtime(timezone.now())
+        if not start_date_str or not end_date_str:
+            start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_date = now
+        else:
+            start_date = timezone.datetime.fromisoformat(start_date_str)
+            end_date = timezone.datetime.fromisoformat(end_date_str)
+        
+        # Make dates timezone aware
+        start_date = timezone.make_aware(start_date)
+        end_date = timezone.make_aware(end_date)
+        
+        # Get all expenses in date range
+        expenses = Expense.objects.filter(
+            user=user,
+            expense_date__gte=start_date,
+            expense_date__lte=end_date
+        )
+        
+        # Calculate totals
+        total_expenses = expenses.aggregate(total=models.Sum('amount'))['total'] or 0
+        total_transactions = expenses.count()
+        
+        # Category breakdown
+        category_breakdown = expenses.values('category__name', 'category__budget_limit').annotate(
+            total=models.Sum('amount')
+        ).order_by('-total')
+        
+        category_data = []
+        for item in category_breakdown:
+            category_data.append({
+                'name': item['category__name'],
+                'spent': item['total'],
+                'budget': item['category__budget_limit'],
+                'percentage': (item['total'] / total_expenses * 100) if total_expenses > 0 else 0,
+                'utilization': (item['total'] / item['category__budget_limit'] * 100) if item['category__budget_limit'] > 0 else 0
+            })
+        
+        # Monthly trend for the selected range
+        monthly_trend = []
+        current = start_date
+        while current <= end_date:
+            month_start = current.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            next_month = month_start + timedelta(days=32)
+            month_end = next_month.replace(day=1) - timedelta(microseconds=1)
+            
+            month_expenses = Expense.objects.filter(
+                user=user,
+                expense_date__gte=month_start,
+                expense_date__lte=month_end
+            ).aggregate(total=models.Sum('amount'))['total'] or 0
+            
+            monthly_trend.append({
+                'month': month_start.strftime('%b %Y'),
+                'total': month_expenses
+            })
+            current = next_month.replace(day=1)
+        
+        # Daily spending
+        daily_spending = expenses.values('expense_date__date').annotate(
+            total=models.Sum('amount')
+        ).order_by('expense_date__date')
+        
+        daily_data = []
+        for item in daily_spending:
+            daily_data.append({
+                'date': item['expense_date__date'].strftime('%Y-%m-%d'),
+                'amount': item['total']
+            })
+        
+        # Recent transactions
+        recent_transactions = expenses.order_by('-expense_date')[:20]
+        transactions_data = [
+            {
+                'id': exp.id,
+                'date': exp.expense_date.strftime('%Y-%m-%d'),
+                'description': exp.description or 'No description',
+                'category': exp.category.name,
+                'amount': exp.amount
+            }
+            for exp in recent_transactions
+        ]
+        
+        # Insights
+        insights = self._generate_insights(user, expenses, total_expenses, category_data, start_date, end_date)
+        
+        return Response({
+            'summary': {
+                'total_expenses': total_expenses,
+                'total_transactions': total_transactions,
+                'average_daily_spending': round(total_expenses / ((end_date - start_date).days + 1), 2) if total_expenses > 0 else 0,
+                'date_range': {
+                    'start': start_date.strftime('%Y-%m-%d'),
+                    'end': end_date.strftime('%Y-%m-%d'),
+                    'days': (end_date - start_date).days + 1
+                }
+            },
+            'category_breakdown': category_data,
+            'monthly_trend': monthly_trend,
+            'daily_spending': daily_data,
+            'recent_transactions': transactions_data,
+            'insights': insights,
+            'currency': 'RWF'
+        })
+    
+    def _generate_insights(self, user, expenses, total_expenses, category_data, start_date, end_date):
+        insights = []
+        
+        # 1. Highest spending category
+        if category_data:
+            top_category = max(category_data, key=lambda x: x['spent'])
+            insights.append({
+                'type': 'top_category',
+                'title': 'Highest Spending Category',
+                'message': f"You spent {top_category['spent']:,.0f} RWF on {top_category['name']}, which is {top_category['percentage']:.0f}% of your total expenses."
+            })
+        
+        # 2. Budget alert categories
+        over_budget = [cat for cat in category_data if cat['utilization'] > 100]
+        if over_budget:
+            for cat in over_budget[:3]:
+                insights.append({
+                    'type': 'budget_alert',
+                    'title': f"Over Budget: {cat['name']}",
+                    'message': f"You've spent {cat['spent']:,.0f} RWF against a budget of {cat['budget']:,.0f} RWF ({cat['utilization']:.0f}% used)."
+                })
+        
+        # 3. Daily spending insight
+        if expenses.count() > 0:
+            days = (end_date - start_date).days + 1
+            avg_daily = total_expenses / days
+            insights.append({
+                'type': 'daily_average',
+                'title': 'Average Daily Spending',
+                'message': f"You spend an average of {avg_daily:,.0f} RWF per day over the selected period."
+            })
+        
+        # 4. Transaction count
+        if expenses.count() > 0:
+            insights.append({
+                'type': 'transaction_count',
+                'title': 'Transaction Activity',
+                'message': f"You made {expenses.count()} transactions during this period."
+            })
+        
+        return insights
