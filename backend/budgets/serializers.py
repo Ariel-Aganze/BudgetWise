@@ -30,12 +30,33 @@ class CategorySerializer(serializers.ModelSerializer):
     
     def validate_name(self, value):
         user = self.context['request'].user
+        
+        # Check if there's an ACTIVE category with the same name
         if self.instance:
-            if Category.objects.filter(user=user, name=value).exclude(id=self.instance.id).exists():
-                raise serializers.ValidationError("You already have a category with this name.")
+            # Update scenario - exclude current instance
+            if Category.objects.filter(
+                user=user, 
+                name=value, 
+                is_active=True
+            ).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError("You already have an active category with this name.")
         else:
-            if Category.objects.filter(user=user, name=value).exists():
-                raise serializers.ValidationError("You already have a category with this name.")
+            # Create scenario - check for any active category with the same name
+            if Category.objects.filter(user=user, name=value, is_active=True).exists():
+                raise serializers.ValidationError("You already have an active category with this name.")
+            
+            # Also check if there's a deleted category with the same name
+            deleted_category = Category.objects.filter(
+                user=user, 
+                name=value, 
+                is_active=False
+            ).first()
+            
+            if deleted_category:
+                # Allow creation but warn the user
+                # You can optionally reactivate the deleted category instead
+                pass
+        
         return value
     
     def validate_budget_limit(self, value):
@@ -59,12 +80,19 @@ class CategoryCreateUpdateSerializer(serializers.ModelSerializer):
     
     def validate_name(self, value):
         user = self.context['request'].user
+        
         if self.instance:
-            if Category.objects.filter(user=user, name=value).exclude(id=self.instance.id).exists():
-                raise serializers.ValidationError("You already have a category with this name.")
+            # Update scenario - exclude current instance
+            if Category.objects.filter(
+                user=user, 
+                name=value, 
+                is_active=True
+            ).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError("You already have an active category with this name.")
         else:
-            if Category.objects.filter(user=user, name=value).exists():
-                raise serializers.ValidationError("You already have a category with this name.")
+            # Create scenario - check for any active category with the same name
+            if Category.objects.filter(user=user, name=value, is_active=True).exists():
+                raise serializers.ValidationError("You already have an active category with this name.")
         return value
     
     def validate_budget_limit(self, value):

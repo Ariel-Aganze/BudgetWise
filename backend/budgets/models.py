@@ -27,7 +27,8 @@ class Category(models.Model):
         verbose_name = 'Category'
         verbose_name_plural = 'Categories'
         ordering = ['name']
-        unique_together = ['user', 'name']
+        # Remove the unique_together constraint - we'll handle uniqueness in validation
+        # unique_together = ['user', 'name']  # REMOVE THIS LINE
     
     def __str__(self):
         return f"{self.name} - {self.budget_limit:,.0f} RWF"
